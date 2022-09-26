@@ -3,6 +3,12 @@ Full rewrite of https://github.com/diamondburned/sysmet in Rust (store data in a
 
 **Warning** it is not compatible with the original databases
 
+## CRON
+For example you can run `sysmet-update` with cron every 5min and purge data older than 2 days
+```
+*/5 * * * * /<path to>/sysmet-update -db /<path to>/database -gc 2
+```
+
 <!--
 # Need reporting panel
 https://lib.rs/crates/tracing-honeycomb
