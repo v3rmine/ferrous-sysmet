@@ -1,0 +1,7 @@
+[workspace]
+members = [".", "bin/*", "services/*", "xtask"]
+
+[profile.release]
+lto = "fat"
+opt-level = 3 # 's' to optimize for size or 'z' to optimize "aggressively" for size
+codegen-units = 1

@@ -1,0 +1,15 @@
+[package]
+name = "sysmet-update"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = { path = "../../services/log" }
+env = { path = "../../services/env" }
+metrics = { path = "../../services/metrics" }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "3.2.22", features = ["derive"] }
+eyre = "0.6"
+color-eyre = "0.6"

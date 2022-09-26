@@ -1,0 +1,20 @@
+[package]
+name = "sysmet-http"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+log = { path = "../../services/log" }
+env = { path = "../../services/env" }
+
+tokio = { version = "1", features = ["full"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.3", features = ["trace"] }
+axum = { version = "0.5", features = ["http2"] }
+eyre = "0.6"
+color-eyre = "0.6"
+tracing-futures = "0.2" # needed so intrument works with async functions.
+maud = { git = "https://github.com/lambda-fairy/maud.git", features = ["axum"] }
+include_dir = "0.7"
+clap = { version = "3.2.22", features = ["derive"] }
+lazy_static = "1.4.0"

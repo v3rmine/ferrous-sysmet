@@ -1,0 +1,8 @@
+/.vscode
+
+**/target
+*.db*
+.env
+**/node_modules
+
+bin/sysmet-http/css/exports/*
