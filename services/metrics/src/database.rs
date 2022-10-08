@@ -7,8 +7,8 @@ use std::{
     time::{Duration, Instant},
 };
 
+use chrono::{DateTime, Utc};
 use log::{debug, trace, tracing, warn};
-use rmp_serde::{Deserializer, Serializer};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -19,10 +19,10 @@ const LOCKFILE_TIMEOUT: Duration = Duration::from_secs(5);
 
 const CRATE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Database {
     version: String,
-    snapshots: Vec<SnapShot>,
+    pub snapshots: Vec<SnapShot>,
 }
 
 impl Default for Database {
@@ -92,7 +92,7 @@ impl Database {
             Database::default()
         } else {
             let mut reader = BufReader::new(file);
-            let database = Database::deserialize(&mut Deserializer::new(&mut reader))?;
+            let database = serde_cbor::from_reader::<Database, _>(&mut reader)?;
             tracing::debug!(
                 "Deserialized database with {} snapshots",
                 database.snapshots.len()
@@ -124,7 +124,7 @@ impl Database {
                 .map_err(Error::FailedToGetFileMetadata)?
                 .len()
         );
-        self.serialize(&mut Serializer::new(&mut writer))?;
+        serde_cbor::to_writer(&mut writer, self)?;
         writer.flush().map_err(Error::FailedToWriteFile)?;
         debug!(
             "File size after write is {}",
@@ -141,7 +141,6 @@ impl Database {
 
         let mut options = OpenOptions::new();
         options.read(true);
-        options.create(true);
 
         let file = Self::lock(options, &path)?;
         let result = Self::load_database(&file)?;
@@ -215,5 +214,26 @@ impl Database {
         );
 
         Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_cpu_usages(&self) -> Vec<(f64, DateTime<Utc>)> {
+        let mut result: Vec<(f64, DateTime<Utc>)> = Vec::with_capacity(self.snapshots.len());
+        let cpus_times = self
+            .snapshots
+            .iter()
+            .map(|s| (s.get_cpu_time(), s.time))
+            .collect::<Vec<_>>();
+
+        for (idx, ((active, total), time)) in cpus_times.iter().enumerate() {
+            let usage = active / total * 100.0;
+
+            let idx = cpus_times.len() - idx - 1;
+            debug!(idx, cpu_usage=?usage, time=?time);
+            result.push((usage, *time));
+        }
+
+        debug!(cpu_usage_percentages = ?result);
+        result
     }
 }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::Result;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub(crate) struct LoadAvg {
+pub struct LoadAvg {
     /// Number of jobs in the run queue averaged over 1 minute.
     pub one: f64,
     /// Number of jobs in the run queue averaged over 5 minute.

@@ -4,8 +4,8 @@ if ! command -v cargo-watch >/dev/null; then
 	cargo install cargo-watch
 fi
 
-trap 'kill $CSS_WATCHER 2>/dev/null; kill $BROWSER_SYNC 2>/dev/null; exit' INT
-root=bin/sysmet-http/
+trap 'kill $CSS_WATCHER 2>/dev/null && echo css watcher gracefull shutdown; kill $BROWSER_SYNC 2>/dev/null && echo browser-sync gracefull shutdown; exit' INT
+root="bin/sysmet-http"
 
 yarn run serve >/dev/null &
 BROWSER_SYNC=$!
@@ -14,7 +14,10 @@ cd "$root/css" && yarn run watch >/dev/null &
 CSS_WATCHER=$!
 
 cargo watch \
+  -c \
+	--no-gitignore \
 	--watch "$root/src" \
 	--watch "$root/Cargo.toml" \
 	--watch "$root/css/exports" \
-	-- cargo run -p sysmet-http -- --db test.db -v
+	--watch "$root/../../services" \
+	-- cargo-clif run -p sysmet-http -- --db test.db

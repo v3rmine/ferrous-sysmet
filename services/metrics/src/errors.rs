@@ -10,6 +10,8 @@ pub enum Error {
     Psutil(#[from] psutil::Error),
     #[error("SemVer failed")]
     SemVer(#[from] semver::Error),
+    #[error("Failed to convert data from/to cbor")]
+    SerdeCbor(#[from] serde_cbor::Error),
     #[error("Provided path is invalid: {0}")]
     InvalidPath(std::convert::Infallible),
     #[error("Failed to open file: {0}")]
@@ -22,10 +24,6 @@ pub enum Error {
     FailedToSetFileCursor(std::io::Error),
     #[error("Failed to remove file: {0}")]
     FailedToRemoveFile(std::io::Error),
-    #[error("Failed to convert from MessagePack")]
-    FromMessagePack(#[from] rmp_serde::decode::Error),
-    #[error("Failed to convert to MessagePack")]
-    ToMessagePack(#[from] rmp_serde::encode::Error),
     #[error("Timeout while trying to lock {0:?}")]
     LockFileTimeout(PathBuf),
 }

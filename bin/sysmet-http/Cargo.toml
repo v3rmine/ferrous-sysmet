@@ -6,15 +6,35 @@ edition = "2021"
 [dependencies]
 log = { path = "../../services/log" }
 env = { path = "../../services/env" }
+metrics = { path = "../../services/metrics" }
 
+# Async runtime
 tokio = { version = "1", features = ["full"] }
+tokio-scoped = "0.2"
+# HTTP server 
 tower = { version = "0.4", features = ["full"] }
 tower-http = { version = "0.3", features = ["trace"] }
 axum = { version = "0.5", features = ["http2"] }
+# Handling errors
 eyre = "0.6"
 color-eyre = "0.6"
-tracing-futures = "0.2" # needed so intrument works with async functions.
+# Logging needed so intrument works with async functions
+tracing-futures = "0.2"
+# HTML Templating
 maud = { git = "https://github.com/lambda-fairy/maud.git", features = ["axum"] }
-include_dir = "0.7"
+# Bundling assets in the binary
+include_dir = { version = "0.7.2", features = ["nightly"] }
+# Parsing command line arguments
 clap = { version = "3.2.22", features = ["derive"] }
-lazy_static = "1.4.0"
+# Computing assets SHA256 hashes
+sha2 = "0.10.6"
+base64 = "0.13.0"
+# Replacement for lazy_static (to store address and to compute assets hashes)
+once_cell = "1.15.0"
+# To parse query parameters
+serde = { version = "1", features = ["derive"] }
+# To parse user inputed time
+humantime = "2.1"
+chrono = { version = "0.4", default-features = false }
+# Helper to handle structs
+typed-builder = "0.10.0"

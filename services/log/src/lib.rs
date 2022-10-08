@@ -10,7 +10,7 @@ pub use tracing;
 use tracing_tree::HierarchicalLayer;
 
 /// Re-export log macros for convenience.
-pub use tracing::log::{debug, error, info, trace, warn};
+pub use tracing::{debug, error, info, trace, warn};
 
 pub fn setup_logger() {
     // This will print tracing events to standard output for humans to read

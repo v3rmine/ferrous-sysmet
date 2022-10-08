@@ -3,17 +3,17 @@
 use std::env::{set_var, var};
 
 use clap::Parser;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use sysmet_http::{run_server, Result};
 
-// NOTE: Use HOST and PORT env variables as defaults
-lazy_static! {
-    static ref DEFAULT_ADDRESS: String = format!(
+// NOTE: Use HOST and PORT env variables as defaults (runtime)
+static DEFAULT_ADDRESS: Lazy<String> = Lazy::new(|| {
+    format!(
         "{}:{}",
         var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
         var("PORT").unwrap_or_else(|_| "8080".to_string())
-    );
-}
+    )
+});
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -26,7 +26,7 @@ struct Cli {
     verbosity: usize,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     color_eyre::install()?;
     env::setup_env()?;
@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
 
     let _logfiles_writer_handle = log::setup_logger_with_logfiles(env!("CARGO_PKG_NAME"));
 
-    run_server(app.address.parse()?).await?;
+    run_server(app.address.parse()?, &app.database).await?;
 
     Ok(())
 }

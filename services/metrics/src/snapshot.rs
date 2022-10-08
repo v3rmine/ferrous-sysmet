@@ -8,21 +8,21 @@ use ::psutil::{
     sensors::{temperatures, TemperatureSensor},
 };
 use chrono::{DateTime, Utc};
-use log::tracing;
+use log::{debug, tracing};
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SnapShot {
-    cpus: Vec<CpuTimes>,
-    memory: VirtualMemory,
-    swap: SwapMemory,
-    networks: Vec<NetIoCounters>,
-    disks: HashMap<String, DiskIoCounters>,
-    temps: Vec<TemperatureSensor>,
-    load_avgs: crate::psutil::LoadAvg,
-    time: DateTime<Utc>,
+    pub cpus: Vec<CpuTimes>,
+    pub memory: VirtualMemory,
+    pub swap: SwapMemory,
+    pub networks: Vec<NetIoCounters>,
+    pub disks: HashMap<String, DiskIoCounters>,
+    pub temps: Vec<TemperatureSensor>,
+    pub load_avgs: crate::psutil::LoadAvg,
+    pub time: DateTime<Utc>,
 }
 
 impl SnapShot {
@@ -54,6 +54,18 @@ impl SnapShot {
         log::trace!("Snapshot taken with data\n{:#?}", result);
 
         Ok(result)
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_cpu_time(&self) -> (f64, f64) {
+        let result = self.cpus.iter().fold((0.0, 0.0), |(busy, total), cpu| {
+            (
+                busy + cpu.busy().as_secs_f64(),
+                total + cpu.total().as_secs_f64(),
+            )
+        });
+        debug!(active_time = result.0, total_time = result.1);
+        result
     }
 
     pub fn try_default() -> Result<Self> {
