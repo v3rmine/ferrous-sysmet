@@ -217,7 +217,7 @@ impl Database {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn get_cpu_usages(&self) -> Vec<(f64, DateTime<Utc>)> {
+    pub fn get_cpu_usage(&self) -> Vec<(f64, DateTime<Utc>)> {
         let mut result: Vec<(f64, DateTime<Utc>)> = Vec::with_capacity(self.snapshots.len());
         let cpus_times = self
             .snapshots
@@ -234,6 +234,90 @@ impl Database {
         }
 
         debug!(cpu_usage_percentages = ?result);
+        result
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_ram_usage(&self) -> Vec<((f64, f64), DateTime<Utc>)> {
+        let result = self
+            .snapshots
+            .iter()
+            .map(|s| (s.get_ram_usage(), s.time))
+            .collect::<Vec<_>>();
+
+        debug!(ram_usage_percentages = ?result);
+        result
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_load(&self) -> Vec<((f64, f64, f64), DateTime<Utc>)> {
+        let result = self
+            .snapshots
+            .iter()
+            .map(|s| {
+                let (one, five, fifteen) = s.get_load();
+                let cpu_count = s.get_cpu_count() as f64;
+                let to_percentage = |load| load / cpu_count * 100.0;
+                (
+                    (
+                        to_percentage(one),
+                        to_percentage(five),
+                        to_percentage(fifteen),
+                    ),
+                    s.time,
+                )
+            })
+            .collect::<Vec<_>>();
+
+        debug!(load_avg = ?result);
+        result
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_network(&self) -> Vec<((f64, f64), DateTime<Utc>)> {
+        let result = self
+            .snapshots
+            .iter()
+            .map(|s| {
+                let (recv, sent) = s.get_network_usage();
+                let to_mib = |bytes| bytes as f64 / 1024.0 / 1024.0;
+                ((to_mib(recv), to_mib(sent)), s.time)
+            })
+            .collect::<Vec<_>>();
+
+        debug!(network_usage = ?result);
+        result
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_disks_speed_usage(&self) -> Vec<((f64, f64), DateTime<Utc>)> {
+        let result = self
+            .snapshots
+            .iter()
+            .map(|s| {
+                let (read, written) = s.get_disk_speed_usage();
+                let to_kib = |bytes: u64| (bytes / 1024) as f64;
+                ((to_kib(read), to_kib(written)), s.time)
+            })
+            .collect::<Vec<_>>();
+
+        debug!(disks_speed_usage = ?result);
+        result
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn get_disk_memory_usage(&self) -> Vec<((f64, f64), DateTime<Utc>)> {
+        let result = self
+            .snapshots
+            .iter()
+            .map(|s| {
+                let (recv, sent) = s.get_network_usage();
+                let to_mib = |bytes| bytes as f64 / 1024.0 / 1024.0;
+                ((to_mib(recv), to_mib(sent)), s.time)
+            })
+            .collect::<Vec<_>>();
+
+        debug!(network_usage = ?result);
         result
     }
 }

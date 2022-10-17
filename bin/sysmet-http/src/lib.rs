@@ -126,10 +126,11 @@ struct HomeQuery {
 }
 
 const CPU_USAGE_TITLE: &str = "CPU Usage";
-// const RAM_USAGE_TITLE: &str = "RAM Usage";
-// const LOAD_AVERAGE_TITLE: &str = "Load Average";
-// const NETWORK_TITLE: &str = "Network";
-// const DISKS_TITLE: &str = "Disks";
+const RAM_USAGE_TITLE: &str = "RAM Usage";
+const LOAD_AVERAGE_TITLE: &str = "Load Average";
+const NETWORK_TITLE: &str = "Network";
+const DISKS_SPEED_TITLE: &str = "Disks Speed Usage";
+const DISKS_MEMORY_TITLE: &str = "Disks Memory Usage";
 
 #[tracing::instrument]
 async fn home(
@@ -150,37 +151,97 @@ async fn home(
 
     let snapshots_len = chart_data.snapshots.len();
 
-    let mut cpus_usages = Vec::with_capacity(snapshots_len);
-    for (snap, timestamp) in chart_data.get_cpu_usages() {
-        cpus_usages.push((snap, timestamp.timestamp(), ()) as ChartValue<_>);
-    }
+    let cpus_usages = chart_data.get_cpu_usage().into_iter().fold(
+        Vec::with_capacity(snapshots_len),
+        |mut cpus_usages, (snap, timestamp)| {
+            cpus_usages.push((snap, timestamp.timestamp(), ()) as ChartValue<_>);
+            cpus_usages
+        },
+    );
 
-    let chart_sections = chart_data
-        .snapshots
-        .into_iter()
-        .fold(
-            vec![(CPU_USAGE_TITLE, cpus_usages)]
-                .into_iter()
-                .collect::<HashMap<&str, Vec<ChartValue<()>>>>(),
-            |collections, snapshot| {
-                let _timestamp = snapshot.time.timestamp();
+    let (ram_usages, swap_usages) = chart_data.get_ram_usage().into_iter().fold(
+        (
+            Vec::with_capacity(snapshots_len),
+            Vec::with_capacity(snapshots_len),
+        ),
+        |(mut ram_usages, mut swap_usages), ((ram, swap), timestamp)| {
+            let time = timestamp.timestamp();
+            ram_usages.push((ram, time, ()) as ChartValue<_>);
+            swap_usages.push((swap, time, ()) as ChartValue<_>);
 
-                collections
-            },
-        )
-        .into_iter()
-        .map(|(title, values)| {
+            (ram_usages, swap_usages)
+        },
+    );
+
+    let (load_avgs_one, load_avgs_five, load_avgs_fiveteen) =
+        chart_data.get_load().into_iter().fold(
             (
-                title,
-                match title {
-                    CPU_USAGE_TITLE => ChartContext::builder()
-                        .collections(vec![("#e00", values)])
-                        .build(),
-                    _ => unreachable!(),
-                },
-            )
-        })
-        .collect::<Vec<_>>();
+                Vec::with_capacity(snapshots_len),
+                Vec::with_capacity(snapshots_len),
+                Vec::with_capacity(snapshots_len),
+            ),
+            |(mut load_avgs_one, mut load_avgs_five, mut load_avgs_fiveteen),
+             ((load_avg_one, load_avg_five, load_avg_fiveteen), timestamp)| {
+                let time = timestamp.timestamp();
+                load_avgs_one.push((load_avg_one, time, ()) as ChartValue<_>);
+                load_avgs_five.push((load_avg_five, time, ()) as ChartValue<_>);
+                load_avgs_fiveteen.push((load_avg_fiveteen, time, ()) as ChartValue<_>);
+
+                (load_avgs_one, load_avgs_five, load_avgs_fiveteen)
+            },
+        );
+
+    let (network_recv_usage, network_sent_usage) = chart_data.get_network().into_iter().fold(
+        (
+            Vec::with_capacity(snapshots_len),
+            Vec::with_capacity(snapshots_len),
+        ),
+        |(mut network_recv_usage, mut network_sent_usage), ((recv, sent), timestamp)| {
+            let time = timestamp.timestamp();
+            network_recv_usage.push((recv, time, ()) as ChartValue<_>);
+            network_sent_usage.push((sent, time, ()) as ChartValue<_>);
+
+            (network_recv_usage, network_sent_usage)
+        },
+    );
+
+    let chart_sections = vec![
+        (
+            CPU_USAGE_TITLE,
+            ChartContext::builder()
+                .collections(vec![("#e00", None, cpus_usages)])
+                .build(),
+        ),
+        (
+            RAM_USAGE_TITLE,
+            ChartContext::builder()
+                .collections(vec![
+                    ("#0e0", Some("RAM"), ram_usages),
+                    ("#e0e", Some("Swap"), swap_usages),
+                ])
+                .build(),
+        ),
+        (
+            LOAD_AVERAGE_TITLE,
+            ChartContext::builder()
+                .collections(vec![
+                    ("#a0a", Some("1 minutes"), load_avgs_one),
+                    ("#0a0", Some("5 minutes"), load_avgs_five),
+                    ("#00e", Some("15 minutes"), load_avgs_fiveteen),
+                ])
+                .build(),
+        ),
+        (
+            NETWORK_TITLE,
+            ChartContext::builder()
+                .unit("MiB")
+                .collections(vec![
+                    ("#faa", Some("Received"), network_recv_usage),
+                    ("#aaf", Some("Sent"), network_sent_usage),
+                ])
+                .build(),
+        ),
+    ];
 
     Base(
         BaseContext::builder().refresh_every_minute(refresh).build(),

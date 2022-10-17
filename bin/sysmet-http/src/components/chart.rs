@@ -13,17 +13,20 @@ const SVG_MAX_Y: f64 = 300.0;
 const SVG_Y_RATIO: f64 = SVG_MAX_Y - SVG_MIN_Y;
 
 const ESTIMATED_ONE_CHAR_SIZE: f64 = 16.0;
-const CHART_MIN_X: f64 = SVG_MIN_X + (ESTIMATED_ONE_CHAR_SIZE * 5.0);
+const RESERVED_CHARACTERS: f64 = 7.0;
+const CHART_MIN_X: f64 = SVG_MIN_X + (ESTIMATED_ONE_CHAR_SIZE * RESERVED_CHARACTERS);
 const CHART_MAX_X: f64 = SVG_MAX_X;
 const CHART_X_RATIO: f64 = CHART_MAX_X - CHART_MIN_X;
 const CHART_MIN_Y: f64 = SVG_MIN_Y + (SVG_Y_RATIO * 0.05);
 const CHART_MAX_Y: f64 = SVG_MAX_Y - (SVG_Y_RATIO * 0.05);
 const CHART_Y_RATIO: f64 = CHART_MAX_Y - CHART_MIN_Y;
 
+type ChartCollectionBuilder<'a, 'b, T> = (&'a str, Option<&'b str>, Vec<ChartValue<T>>);
+
 #[derive(Debug, Default, TypedBuilder)]
 pub struct ChartContext<T> {
-    #[builder(setter(transform = |collections: Vec<(&str, Vec<ChartValue<T>>)>| collections.into_iter().map(|(color, values)| (color.into(), values)).collect::<Vec<_>>()))]
-    pub collections: Vec<(String, Vec<ChartValue<T>>)>,
+    #[builder(setter(transform = |collections: Vec<ChartCollectionBuilder<'_, '_, T>>| collections.into_iter().map(|(color, label, values)| (color.into(), label.map(|l| l.into()), values)).collect::<Vec<_>>()))]
+    pub collections: Vec<(String, Option<String>, Vec<ChartValue<T>>)>,
     #[builder(setter(strip_option), default = None)]
     pub max_value: Option<f64>,
     #[builder(default = "%".to_string(), setter(into))]
@@ -60,6 +63,12 @@ fn values_to_polyline<T: Debug>(
     let values = raw_values
         .iter()
         .map(|(val, date, _)| {
+            trace!(
+                date,
+                first_date,
+                top = date - first_date,
+                bottom = date_ratio * CHART_X_RATIO + CHART_MIN_X
+            );
             format!(
                 "{},{}",
                 ((date - first_date) as f64 / date_ratio * CHART_X_RATIO + CHART_MIN_X).round(),
@@ -91,7 +100,7 @@ pub fn Chart<T: Debug>(ctx: ChartContext<T>) -> Markup {
         let max_value = ctx.max_value.unwrap_or_else(|| {
             ctx.collections
                 .iter()
-                .flat_map(|(_, values)| values.iter().map(|(val, _, _)| val))
+                .flat_map(|(_, _, values)| values.iter().map(|(val, _, _)| val))
                 .fold(0f64, |max, x| max.max(*x))
         });
         trace!(max_value);
@@ -99,7 +108,7 @@ pub fn Chart<T: Debug>(ctx: ChartContext<T>) -> Markup {
         let collections = ctx
             .collections
             .iter()
-            .filter_map(|(color, values)| {
+            .filter_map(|(color, _label, values)| {
                 values_to_polyline(values, (0f64, max_value))
                     .map(|polyine| (color, polyine, max_value))
             })

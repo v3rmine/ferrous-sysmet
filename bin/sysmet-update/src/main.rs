@@ -17,6 +17,9 @@ struct Cli {
     ignored_networks: Vec<String>,
     #[clap(short, long = "verbose", parse(from_occurrences))]
     verbosity: usize,
+    // NOTE: This is only used for benchmarking and testing purposes and should not be used in normally.
+    #[clap(long, value_name = "NUMBER OF SNAPSHOTS", hide(true))]
+    times: Option<u32>,
 }
 
 fn main() -> Result<()> {
@@ -35,13 +38,25 @@ fn main() -> Result<()> {
     log::setup_logger();
 
     let (mut database, file, path) = Database::from_file_with_write(&app.database)?;
-    database.take_snapshot(
-        app.ignored_networks
-            .iter()
-            .map(|n| n.as_ref())
-            .collect::<Vec<&str>>()
-            .as_ref(),
-    )?;
+    if let Some(times) = app.times {
+        for _ in 0..times {
+            database.take_snapshot(
+                app.ignored_networks
+                    .iter()
+                    .map(|n| n.as_ref())
+                    .collect::<Vec<&str>>()
+                    .as_ref(),
+            )?;
+        }
+    } else {
+        database.take_snapshot(
+            app.ignored_networks
+                .iter()
+                .map(|n| n.as_ref())
+                .collect::<Vec<&str>>()
+                .as_ref(),
+        )?;
+    }
     database.write_and_close_file(file, &path)?;
 
     Ok(())
