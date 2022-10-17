@@ -16,9 +16,7 @@ rustflags = [
     "-Clinker=clang",
     "-Clink-arg=-fuse-ld=/usr/local/bin/mold",
     "-Clink-arg=-Wl,--compress-debug-sections=zlib",
-    "-Cforce-frame-pointers=yes",
-    "-Ctarget-feature=+crt-static",
-    "-Clink-self-contained=yes"
+    "-Cforce-frame-pointers=yes"
 ]
 
 # NOTE: you must manually install https://github.com/michaeleisel/zld on mac. you can easily do this with the "brew" package manager:
