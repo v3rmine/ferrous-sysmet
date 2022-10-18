@@ -1784,6 +1784,7 @@ dependencies = [
  "color-eyre",
  "env",
  "eyre",
+ "glob",
  "log 0.1.0",
  "metrics",
  "serde",

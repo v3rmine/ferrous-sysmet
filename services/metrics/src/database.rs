@@ -280,7 +280,7 @@ impl Database {
             .iter()
             .map(|s| {
                 let (recv, sent) = s.get_network_usage();
-                let to_mib = |bytes| bytes as f64 / 1024.0 / 1024.0;
+                let to_mib = |bytes| bytes / 1024.0 / 1024.0;
                 ((to_mib(recv), to_mib(sent)), s.time)
             })
             .collect::<Vec<_>>();
@@ -312,7 +312,7 @@ impl Database {
             .iter()
             .map(|s| {
                 let (recv, sent) = s.get_network_usage();
-                let to_mib = |bytes| bytes as f64 / 1024.0 / 1024.0;
+                let to_mib = |bytes| bytes / 1024.0 / 1024.0;
                 ((to_mib(recv), to_mib(sent)), s.time)
             })
             .collect::<Vec<_>>();

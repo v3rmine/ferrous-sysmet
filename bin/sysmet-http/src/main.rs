@@ -29,7 +29,7 @@ struct Cli {
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    env::setup_env()?;
+    env::setup_env();
 
     let app = Cli::parse();
 

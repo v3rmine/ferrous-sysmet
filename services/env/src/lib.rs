@@ -13,9 +13,8 @@ pub enum Error {
     DotEnv(#[from] dotenvy::Error),
 }
 
-pub fn setup_env() -> Result<(), Error> {
-    dotenv()?;
-    Ok(())
+pub fn setup_env() {
+    dotenv().ok();
 }
 
 #[tracing::instrument]

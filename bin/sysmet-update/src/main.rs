@@ -13,8 +13,10 @@ struct Cli {
     database: String,
     #[clap(long, visible_alias = "gc", value_parser, value_name = "DAYS")]
     cleanup_older: Option<u32>,
-    #[clap(long, short, value_name = "NETWORKS NAMES")]
+    #[clap(long, visible_alias = "in", value_name = "NETWORKS NAMES")]
     ignored_networks: Vec<String>,
+    #[clap(long, visible_alias = "gin", value_name = "GLOB")]
+    glob_ignored_networks: Vec<String>,
     #[clap(short, long = "verbose", parse(from_occurrences))]
     verbosity: usize,
     // NOTE: This is only used for benchmarking and testing purposes and should not be used in normally.
@@ -26,7 +28,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
 
     let app = Cli::parse();
-    env::setup_env()?;
+    env::setup_env();
 
     if app.verbosity > 2 {
         set_var("LOG_LEVEL", "trace");
