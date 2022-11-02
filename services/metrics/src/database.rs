@@ -12,7 +12,7 @@ use log::{debug, trace, tracing, warn};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::{Error, Result, SnapShot};
+use crate::{prelude::*, Result};
 
 const SLEEP_DURATION_BEFORE_RETRY_LOCK: Duration = Duration::from_millis(100);
 const LOCKFILE_TIMEOUT: Duration = Duration::from_secs(5);
@@ -92,7 +92,7 @@ impl Database {
             Database::default()
         } else {
             let mut reader = BufReader::new(file);
-            let database = serde_cbor::from_reader::<Database, _>(&mut reader)?;
+            let database = ciborium::de::from_reader::<Database, _>(&mut reader)?;
             tracing::debug!(
                 "Deserialized database with {} snapshots",
                 database.snapshots.len()
@@ -124,7 +124,7 @@ impl Database {
                 .map_err(Error::FailedToGetFileMetadata)?
                 .len()
         );
-        serde_cbor::to_writer(&mut writer, self)?;
+        ciborium::ser::into_writer(&self, &mut writer)?;
         writer.flush().map_err(Error::FailedToWriteFile)?;
         debug!(
             "File size after write is {}",
@@ -206,12 +206,33 @@ impl Database {
     }
 
     #[tracing::instrument(skip(self))]
+    pub fn close_file(&self, path: &PathBuf) -> Result<()> {
+        debug!(
+            "Number of snapshot that would have been written {}",
+            self.snapshots.len()
+        );
+        Self::unlock(path)?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
     pub fn take_snapshot(&mut self, networks_to_ignore: &[&str]) -> Result<()> {
         self.snapshots.push(SnapShot::new(networks_to_ignore)?);
         debug!(
             "Number of snapshots after appending {}",
             self.snapshots.len()
         );
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub fn remove_older(&mut self, older_than_days: i64) -> Result<()> {
+        let oldest_date = Utc::now()
+            .checked_sub_signed(chrono::Duration::days(older_than_days))
+            .ok_or(Error::OldestDateOverflow)?;
+        self.snapshots.retain(|snap| snap.time > oldest_date);
 
         Ok(())
     }
@@ -306,14 +327,17 @@ impl Database {
     }
 
     #[tracing::instrument(skip(self))]
-    pub fn get_disk_memory_usage(&self) -> Vec<((f64, f64), DateTime<Utc>)> {
+    pub fn get_disk_memory_usage(&self) -> Vec<(f64, DateTime<Utc>)> {
         let result = self
             .snapshots
             .iter()
             .map(|s| {
-                let (recv, sent) = s.get_network_usage();
+                let usage = s
+                    .get_disks_size_usage()
+                    .into_iter()
+                    .fold(0.0, |sum, (_label, usage)| sum + usage);
                 let to_mib = |bytes| bytes / 1024.0 / 1024.0;
-                ((to_mib(recv), to_mib(sent)), s.time)
+                (to_mib(usage), s.time)
             })
             .collect::<Vec<_>>();
 

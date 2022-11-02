@@ -6,11 +6,11 @@ edition = "2021"
 [dependencies]
 log = { path = "../../services/log" }
 env = { path = "../../services/env" }
-metrics = { path = "../../services/metrics" }
+metrics = { path = "../../services/metrics", features = ["database"] }
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.0.8", features = ["derive"] }
 eyre = "0.6"
 color-eyre = "0.6"
 glob = "0.3"

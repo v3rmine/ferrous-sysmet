@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 log = { path = "../../services/log" }
 env = { path = "../../services/env" }
-metrics = { path = "../../services/metrics" }
+metrics = { path = "../../services/metrics", features = ["database"] }
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }
@@ -25,7 +25,7 @@ maud = { git = "https://github.com/lambda-fairy/maud.git", features = ["axum"] }
 # Bundling assets in the binary
 include_dir = { version = "0.7.2", features = ["nightly"] }
 # Parsing command line arguments
-clap = { version = "3.2.22", features = ["derive"] }
+clap = { version = "4.0.8", features = ["derive", "string"] }
 # Computing assets SHA256 hashes
 sha2 = "0.10.6"
 base64 = "0.13.0"

@@ -4,6 +4,19 @@ use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{fmt, EnvFilter, Layer};
 use tracing_tree::HierarchicalLayer;
 
+pub fn with_pretty<S>() -> Box<dyn Layer<S> + Send + Sync + 'static>
+where
+    S: tracing::Subscriber,
+    for<'a> S: tracing_subscriber::registry::LookupSpan<'a>,
+{
+    fmt::layer()
+        .pretty()
+        .with_ansi(true)
+        .with_line_number(false)
+        .with_file(false)
+        .boxed()
+}
+
 pub fn with_env<S>() -> Box<dyn Layer<S> + Send + Sync + 'static>
 where
     S: tracing::Subscriber,
@@ -62,7 +75,7 @@ where
     if let Ok(directory) = env::var("LOG_DIRECTORY") {
         if !directory.is_empty() {
             let file_appender =
-                tracing_appender::rolling::hourly(directory, format!("{}.log", logfile_prefix));
+                tracing_appender::rolling::hourly(directory, format!("{logfile_prefix}.log"));
             let (log_writer, guard) = tracing_appender::non_blocking(file_appender);
             Some((
                 fmt::layer()

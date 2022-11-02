@@ -99,7 +99,7 @@ async fn home(
     Extension(chart_data): Extension<Arc<RwLock<ChartsData>>>,
 ) -> Markup {
     let time_from_now = time_from_now.0;
-    let _time = time_from_now
+    let _time = time_from_now // TODO: Filter results
         .t
         .clone()
         .and_then(|ref t| humantime::parse_duration(t).ok());

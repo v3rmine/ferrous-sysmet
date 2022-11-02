@@ -2,6 +2,12 @@
 members = [".", "bin/*", "services/*", "xtask"]
 
 [profile.release]
-# lto = "fat"
+lto = "fat" # Deeply optimize linking
 opt-level = 3 # 's' to optimize for size or 'z' to optimize "aggressively" for size
 codegen-units = 1
+
+[profile.release.package.sysmet-notify]
+debug = 0 # Include no debug info
+strip = true # Remove symbols
+opt-level = "s" # Optimize for size because it dont need to be fast
+codegen-units = 1 # Build on only one thread to optimize as much as possible

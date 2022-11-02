@@ -19,7 +19,7 @@ pub fn Head(context: HeadContext, title: &str) -> Markup {
             }
             title { (title) }
             @for (path, (_real_path, hash)) in CSS_HASHES.iter() {
-                link rel="stylesheet" href=(format!("/css/{}", path)) type="text/css" crossorigin="anonymous" integrity=(hash);
+                link rel="stylesheet" href=(format!("/css/{path}")) type="text/css" crossorigin="anonymous" integrity=(hash);
             }
         }
     }

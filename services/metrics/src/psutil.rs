@@ -1,8 +1,10 @@
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct LoadAvg {
     /// Number of jobs in the run queue averaged over 1 minute.
     pub one: f64,

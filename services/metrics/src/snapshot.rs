@@ -9,11 +9,13 @@ use ::psutil::{
 };
 use chrono::{DateTime, Utc};
 use log::{debug, tracing};
+#[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct SnapShot {
     pub cpus: Vec<CpuTimes>,
     pub memory: VirtualMemory,

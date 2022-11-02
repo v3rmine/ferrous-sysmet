@@ -2,7 +2,7 @@
 
 use std::env::{set_var, var};
 
-use clap::Parser;
+use clap::{ArgAction, Parser};
 use once_cell::sync::Lazy;
 use sysmet_http::{run_server, Result};
 
@@ -20,10 +20,10 @@ static DEFAULT_ADDRESS: Lazy<String> = Lazy::new(|| {
 struct Cli {
     #[clap(long, visible_alias = "db", value_name = "FILE")]
     database: String,
-    #[clap(value_name = "LISTENING ADDRESS", default_value = &DEFAULT_ADDRESS)]
+    #[clap(value_name = "LISTENING ADDRESS", default_value = DEFAULT_ADDRESS.as_str())]
     address: String,
-    #[clap(short, long = "verbose", parse(from_occurrences))]
-    verbosity: usize,
+    #[clap(short, long = "verbose", action = ArgAction::Count)]
+    verbosity: u8,
 }
 
 #[tokio::main(flavor = "multi_thread")]

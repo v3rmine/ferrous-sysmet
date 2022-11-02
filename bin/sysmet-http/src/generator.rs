@@ -1,7 +1,7 @@
 use std::{fmt::Debug, sync::Arc, time::Duration};
 
 use log::{debug, trace, tracing};
-use metrics::Database;
+use metrics::prelude::*;
 use tokio::{
     sync::{oneshot::Receiver, RwLock},
     time::Instant,
@@ -142,6 +142,35 @@ impl From<Database> for ChartsData {
             ("#aaf", Some("Sent"), network_sent_usage),
         ]);
 
+        let (disk_speed_read, disk_speed_write): (Vec<ChartValue<_>>, Vec<ChartValue<_>>) =
+            chart_data.get_disks_speed_usage().into_iter().fold(
+                (
+                    Vec::with_capacity(snapshots_len),
+                    Vec::with_capacity(snapshots_len),
+                ),
+                |(mut disk_speed_read, mut disk_speed_write), ((read, write), timestamp)| {
+                    let time = timestamp.timestamp();
+                    disk_speed_read.push((read, time, ()) as ChartValue<_>);
+                    disk_speed_write.push((write, time, ()) as ChartValue<_>);
+                    (disk_speed_read, disk_speed_write)
+                },
+            );
+        let disk_speed_chart = build_chart(vec![
+            ("#afa", Some("Read"), disk_speed_read),
+            ("#faf", Some("Write"), disk_speed_write),
+        ]);
+
+        let disk_memory_usage: Vec<ChartValue<_>> =
+            chart_data.get_disk_memory_usage().into_iter().fold(
+                Vec::with_capacity(snapshots_len),
+                |mut disk_memory_usage, (usage, timestamp)| {
+                    let time = timestamp.timestamp();
+                    disk_memory_usage.push((usage, time, ()) as ChartValue<_>);
+                    disk_memory_usage
+                },
+            );
+        let disk_memory_chart = build_chart(vec![("#a4f", Some("Usage"), disk_memory_usage)]);
+
         let chart_sections = vec![
             (
                 CPU_USAGE_TITLE,
@@ -167,9 +196,25 @@ impl From<Database> for ChartsData {
             (
                 NETWORK_TITLE,
                 ChartContext::builder()
-                    .unit("MiB")
+                    .unit("MiB") // TODO: MiB and if > 1024 GiB
                     .max_value(network_chart.0)
                     .collections(network_chart.1)
+                    .build(),
+            ),
+            (
+                DISKS_SPEED_TITLE,
+                ChartContext::builder()
+                    .unit("MiB")
+                    .max_value(disk_speed_chart.0)
+                    .collections(disk_speed_chart.1)
+                    .build(),
+            ),
+            (
+                DISKS_MEMORY_TITLE,
+                ChartContext::builder()
+                    .unit("MiB")
+                    .max_value(disk_memory_chart.0)
+                    .collections(disk_memory_chart.1)
                     .build(),
             ),
         ];

@@ -11,7 +11,15 @@ pub use tracing::{debug, error, info, trace, warn};
 
 pub mod layers;
 
-pub fn setup_logger() {
+pub fn setup_simple_logger() {
+    // This will print tracing events to standard output for humans to read
+    tracing_subscriber::Registry::default()
+        .with(layers::with_env())
+        .with(layers::with_pretty())
+        .init();
+}
+
+pub fn setup_hierarchical_logger() {
     // This will print tracing events to standard output for humans to read
     tracing_subscriber::Registry::default()
         .with(layers::with_env())
