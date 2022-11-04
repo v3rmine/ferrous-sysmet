@@ -1,4 +1,4 @@
-use std::{env::VarError, ffi::OsStr, path::PathBuf};
+use std::{env::VarError, ffi::OsStr, path::Path};
 
 use dotenvy::{dotenv, from_path};
 use thiserror::Error;
@@ -17,7 +17,7 @@ pub fn setup_env() {
     dotenv().ok();
 }
 
-pub fn setup_env_with_path(path: &PathBuf) {
+pub fn setup_env_with_path(path: &Path) {
     from_path(path).ok();
 }
 

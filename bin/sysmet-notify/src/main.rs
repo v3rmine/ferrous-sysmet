@@ -1,9 +1,11 @@
 #![forbid(unsafe_code)]
 
 use std::{
-    env::set_var,
+    env::{args_os, set_var},
+    ffi::OsString,
     fs::{self, File},
     io::{Seek, SeekFrom, Write},
+    path::Path,
 };
 
 use clap::Parser;
@@ -47,12 +49,21 @@ fn is_threshold_crossed(debug_msg: &str, threshold: Option<u32>, observered_valu
 fn main() -> Result<()> {
     color_eyre::install()?;
 
-    cli::EnvCli::try_parse()
-        .map(|app| {
-            // NOTE: Loading this to override env help
-            env::setup_env_with_path(&app.env_path);
-        })
-        .ok(); // We can safely ignore all errors here 
+    let mut is_setup_with_specific_path = false;
+    for win in args_os().collect::<Vec<OsString>>().windows(2) {
+        if let Some(prev) = win.get(0) {
+            if prev == "--env" {
+                if let Some(next) = win.get(1) {
+                    is_setup_with_specific_path = true;
+                    env::setup_env_with_path(Path::new(next));
+                }
+            }
+        }
+    }
+    if !is_setup_with_specific_path {
+        // Setup env to .env
+        env::setup_env();
+    }
 
     let app = cli::Cli::parse();
     if app.verbose.is_silent() {
@@ -181,7 +192,9 @@ fn main() -> Result<()> {
     debug!(body, "Body that will be sent");
 
     if app.dry_run {
-        info!("Finishing early because there is no need to send a mail");
+        info!(
+            "Finishing early because there is no need to send a mail, the app is in dry-run mode"
+        );
         return Ok(()); // Exit SUCCESS;
     }
 
@@ -198,6 +211,7 @@ fn main() -> Result<()> {
     )?;
 
     let mailer = SmtpTransport::relay(&smtp_relay)?
+        .port(app.smtp_port)
         .credentials(Credentials::new(smtp_user, smtp_password))
         .build();
 

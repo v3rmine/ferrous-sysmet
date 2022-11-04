@@ -1,20 +1,9 @@
-use std::{path::PathBuf, time::Duration};
+use std::time::Duration;
 
-use clap::{Parser, ValueHint};
+use clap::Parser;
 use clap_verbosity_flag::Verbosity;
 use lettre::message::Mailbox;
 use log::{trace, tracing};
-
-#[derive(Debug, Parser)]
-#[clap(version = None, disable_help_flag = true, ignore_errors = true)]
-pub struct EnvCli {
-    #[clap(
-        long = "env",
-        default_value = ".env",
-		value_hint = ValueHint::FilePath,
-    )]
-    pub env_path: PathBuf,
-}
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -78,7 +67,6 @@ pub struct Cli {
 		short,
 		long = "from",
 		env = "MAIL_FROM",
-		value_hint = ValueHint::EmailAddress,
 		value_parser = mailbox_try_from_str,
 		required_unless_present("dry_run"),
 		help = "Identity that will be used to send the mail"
@@ -104,12 +92,11 @@ pub struct Cli {
     )]
     pub cooldown: Duration,
     #[clap(
-		long = "smtp-user",
-		env = "SMTP_USER",
-		required_unless_present("dry_run"),
-		value_hint = ValueHint::EmailAddress,
-		help = "SMTP Username to authenticate with the Relay"
-	)]
+        long = "smtp-user",
+        env = "SMTP_USER",
+        required_unless_present("dry_run"),
+        help = "SMTP Username to authenticate with the Relay"
+    )]
     pub smtp_user: Option<String>,
     #[clap(
         long = "smtp-pass",
@@ -126,21 +113,27 @@ pub struct Cli {
     )]
     pub smtp_relay: Option<String>,
     #[clap(
+        long = "smtp-port",
+        env = "SMTP_PORT",
+		value_parser = clap::value_parser!(u16).range(1..=65535),
+		default_value = "465",
+        help = "SMTP Relay port that will be used to connect to the relay"
+    )]
+    pub smtp_port: u16,
+    #[clap(
         long = "last-sent-path",
         env = "LAST_SENT_PATH",
         default_value = "/tmp/sysmet-notify-last-mail.txt",
-        required_unless_present("dry_run"),
-		value_hint = ValueHint::FilePath,
         help = "Timestamp of the last time a mail was sent"
     )]
     pub last_sent_instant: Option<String>,
     #[clap(
         long = "env",
         default_value = ".env",
-		value_hint = ValueHint::FilePath,
-        help = "Path to the optional env file"
+        help = "Path to the optional env file",
+        required = false
     )]
-    pub env_path: PathBuf,
+    pub env_path: String,
     #[clap(long = "dry-run", help = "Simulate the run")]
     pub dry_run: bool,
     #[clap(flatten)]

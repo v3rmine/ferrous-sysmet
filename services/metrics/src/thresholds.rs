@@ -25,20 +25,33 @@ pub fn load_avg_percent() -> Result<(f32, f32, f32)> {
     Ok(result)
 }
 
-// NOTE: Recommended by python psutil (0.1s = 100ms) => we double it to avoid having 0% CPU
-// BUG: 0% CPU Sometimes when using `cargo run` with 100ms
+// NOTE: Recommended by python psutil (0.1s = 100ms)
 // SOURCE: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
-const CPU_USAGE_INTERVAL: u64 = 200;
+const CPU_USAGE_INTERVAL: u64 = 100;
 
 #[tracing::instrument(level = "debug")]
 pub fn cpu_usage_percent() -> Result<f32> {
-    let mut collector = CpuPercentCollector::new()?;
+    let collector = CpuPercentCollector::new()?;
     trace!(
         "Sleeping for {CPU_USAGE_INTERVAL}ms waiting to have an interval to calculate CPU usage"
     );
-    // NOTE: Needed because CPU usage must be calculated on an interval
     std::thread::sleep(Duration::from_millis(CPU_USAGE_INTERVAL));
-    let result = collector.cpu_percent()?;
+    let mut result = {
+        // NOTE: We clone it so that the initial measurement stay the same
+        let mut collector = collector.clone();
+        collector.cpu_percent()?
+    };
+    while result == 0.0 {
+        trace!(
+			"CPU usage is 0% so waiting for {CPU_USAGE_INTERVAL}ms again to have a more accurate result"
+		);
+        // NOTE: Needed because CPU usage must be calculated on an interval
+        std::thread::sleep(Duration::from_millis(CPU_USAGE_INTERVAL));
+        result = {
+            let mut collector = collector.clone();
+            collector.cpu_percent()?
+        };
+    }
     debug!(cpu_usage_percent = result, "Calculated CPU usage");
     Ok(result)
 }
