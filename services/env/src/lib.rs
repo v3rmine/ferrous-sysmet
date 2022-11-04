@@ -1,6 +1,6 @@
-use std::{env::VarError, ffi::OsStr};
+use std::{env::VarError, ffi::OsStr, path::PathBuf};
 
-use dotenvy::dotenv;
+use dotenvy::{dotenv, from_path};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -15,6 +15,10 @@ pub enum Error {
 
 pub fn setup_env() {
     dotenv().ok();
+}
+
+pub fn setup_env_with_path(path: &PathBuf) {
+    from_path(path).ok();
 }
 
 #[tracing::instrument]

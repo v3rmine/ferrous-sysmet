@@ -24,17 +24,14 @@ pub struct PercentSnapshot {
     pub swap: f32,
     pub memory: f32,
     pub disk: f32,
-    pub avg_load: f64,
+    pub avg_load: f32,
 }
 
-fn is_threshold_crossed<T>(debug_msg: &str, threshold: Option<T>, observered_value: T) -> bool
-where
-    T: PartialOrd + log::tracing::Value,
-{
+fn is_threshold_crossed(debug_msg: &str, threshold: Option<u32>, observered_value: f32) -> bool {
     let mut is_threshold_crossed = false;
 
     if let Some(threshold) = threshold {
-        if observered_value > threshold {
+        if observered_value as f64 > threshold as f64 {
             is_threshold_crossed = true;
             debug!(
                 threshold = threshold,
@@ -49,7 +46,13 @@ where
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    env::setup_env();
+
+    cli::EnvCli::try_parse()
+        .map(|app| {
+            // NOTE: Loading this to override env help
+            env::setup_env_with_path(&app.env_path);
+        })
+        .ok(); // We can safely ignore all errors here 
 
     let app = cli::Cli::parse();
     if app.verbose.is_silent() {
@@ -60,6 +63,7 @@ fn main() -> Result<()> {
 
     log::setup_simple_logger();
     let hostname = get_hostname();
+    info!("Check started on device {hostname}");
     trace!(args =? app, "Cli called with args on device {hostname}");
 
     let now = chrono::Utc::now();
@@ -93,7 +97,7 @@ fn main() -> Result<()> {
         swap,
         memory: (ram + swap) / 2.0, // REVIEW: Might need a more precise way of calculating average memory load
         disk: disk_usage_percent()?,
-        avg_load: load_avg_percent()?.2 * 100.0,
+        avg_load: load_avg_percent()?.2,
     };
 
     trace!(snapshot =? snapshot, "System snapshot taken at {pretty_formated_now}");
@@ -116,7 +120,6 @@ fn main() -> Result<()> {
         app.avg_load_threshold,
         snapshot.avg_load,
     );
-
     let mut body = "Thresholds crossed:\n".to_string();
 
     let mut at_least_one_threshold_crossed = false;
@@ -168,6 +171,8 @@ fn main() -> Result<()> {
     if !at_least_one_threshold_crossed {
         info!("Finishing early because no threshold have been crossed");
         return Ok(()); // Exit SUCCESS;
+    } else {
+        info!("At least one threshold crossed!");
     }
 
     body.push_str("\n\n");

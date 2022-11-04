@@ -10,10 +10,10 @@ use rust_decimal::prelude::Decimal;
 use crate::{PercentSnapshot, Result};
 
 #[tracing::instrument(level = "trace")]
-pub fn format_threshold_crossed_msg<T: Debug + Display>(
+pub fn format_threshold_crossed_msg<T: Debug + Display, O: Debug + Display>(
     name: &str,
     threshold: T,
-    observed_value: T,
+    observed_value: O,
 ) -> Result<String> {
     Ok(format!(
         "- {name} threshold crossed ({}%): observed {}%\n",

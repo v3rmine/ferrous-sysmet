@@ -34,7 +34,7 @@ impl Default for ChartsData {
     }
 }
 
-#[tracing::instrument]
+#[tracing::instrument(level = "debug")]
 pub async fn actualization_task(
     shared_chart_data: Arc<RwLock<ChartsData>>,
     database: String,

@@ -40,7 +40,7 @@ impl Database {
         Ok(path)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(level = "trace")]
     fn lock(options: OpenOptions, path: &PathBuf) -> Result<File> {
         let lockfile = PathBuf::from_str(&format!("{}.lock", path.to_str().unwrap()))
             .map_err(Error::InvalidPath)?;
@@ -70,7 +70,7 @@ impl Database {
         Ok(file)
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(level = "trace")]
     fn unlock(path: &Path) -> Result<()> {
         if path.exists() {
             let lockfile = PathBuf::from_str(&format!("{}.lock", path.to_str().unwrap()))
@@ -81,7 +81,7 @@ impl Database {
         Ok(())
     }
 
-    #[tracing::instrument]
+    #[tracing::instrument(level = "debug")]
     fn load_database(file: &File) -> Result<Self> {
         let file_size = file
             .metadata()
@@ -116,6 +116,7 @@ impl Database {
         Ok(result)
     }
 
+    #[tracing::instrument(level = "debug")]
     fn write_self_to_file(&self, file: &File) -> Result<()> {
         let mut writer = BufWriter::new(file);
         debug!(

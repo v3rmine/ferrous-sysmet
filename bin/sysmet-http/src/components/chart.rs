@@ -19,7 +19,8 @@ pub struct ChartContext {
     pub unit: String,
 }
 
-#[tracing::instrument(skip(ctx), fields(unit = ctx.unit))]
+// TODO: Add hover on dates
+#[tracing::instrument(level = "debug", skip(ctx), fields(unit = ctx.unit))]
 pub fn Chart(ctx: ChartContext) -> Markup {
     if ctx.collections.is_empty() {
         html! {

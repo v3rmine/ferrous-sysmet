@@ -10,24 +10,25 @@ use psutil::{
 };
 
 #[tracing::instrument(level = "debug")]
-pub fn load_avg_percent() -> Result<(f64, f64, f64)> {
+pub fn load_avg_percent() -> Result<(f32, f32, f32)> {
     let cpu_count = cpu_count() as f64;
-    trace!(cpu_count = cpu_count as u32);
+    trace!(cpu_count = cpu_count);
     let LoadAvg { one, five, fifteen } = LoadAvg::new()?;
-    let load_percent = |load: f64| load / cpu_count;
+    let load_percent = |load: f64| (load / cpu_count * 100.0) as f32;
     let result = (load_percent(one), load_percent(five), load_percent(fifteen));
     debug!(
         one_percent = result.0,
-        fice_percent = result.1,
+        five_percent = result.1,
         fifteen_percent = result.2,
         "Calculated Average Load"
     );
     Ok(result)
 }
 
-// NOTE: Recommended by python psutil (0.1s = 100ms)
+// NOTE: Recommended by python psutil (0.1s = 100ms) => we double it to avoid having 0% CPU
+// BUG: 0% CPU Sometimes when using `cargo run` with 100ms
 // SOURCE: https://psutil.readthedocs.io/en/latest/#psutil.cpu_percent
-const CPU_USAGE_INTERVAL: u64 = 100;
+const CPU_USAGE_INTERVAL: u64 = 200;
 
 #[tracing::instrument(level = "debug")]
 pub fn cpu_usage_percent() -> Result<f32> {

@@ -11,7 +11,7 @@ pub(crate) const SVG_MAX_Y: f64 = 300.0;
 pub(crate) const SVG_Y_RATIO: f64 = SVG_MAX_Y - SVG_MIN_Y;
 
 pub(crate) const ESTIMATED_ONE_CHAR_SIZE: f64 = 16.0;
-pub(crate) const RESERVED_CHARACTERS: f64 = 7.0;
+pub(crate) const RESERVED_CHARACTERS: f64 = 9.0;
 pub(crate) const CHART_MIN_X: f64 = SVG_MIN_X + (ESTIMATED_ONE_CHAR_SIZE * RESERVED_CHARACTERS);
 pub(crate) const CHART_MAX_X: f64 = SVG_MAX_X;
 pub(crate) const CHART_X_RATIO: f64 = CHART_MAX_X - CHART_MIN_X;
@@ -22,14 +22,14 @@ pub(crate) const CHART_Y_RATIO: f64 = CHART_MAX_Y - CHART_MIN_Y;
 pub(crate) const LABELS_OFFSET: f64 = CHART_MIN_X - (ESTIMATED_ONE_CHAR_SIZE * 0.5);
 
 // Because the viewBox in SVG invert the values (top left corner is 0,0)
-#[tracing::instrument]
+#[tracing::instrument(level = "trace")]
 pub fn svg_value_invert(value: f64, max: f64, min: f64) -> f64 {
     let result = ((value - min) + (max - min) * -1f64) * -1f64 + min;
     trace!(result);
     result
 }
 
-#[tracing::instrument(skip(raw_values))]
+#[tracing::instrument(level = "trace", skip(raw_values))]
 pub fn values_to_polyline<T: Debug>(
     raw_values: &[ChartValue<T>],
     (min_value_range, max_value_range): (f64, f64),

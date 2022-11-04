@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{path::PathBuf, time::Duration};
 
 use clap::{Parser, ValueHint};
 use clap_verbosity_flag::Verbosity;
@@ -6,51 +6,74 @@ use lettre::message::Mailbox;
 use log::{trace, tracing};
 
 #[derive(Debug, Parser)]
+#[clap(version = None, disable_help_flag = true, ignore_errors = true)]
+pub struct EnvCli {
+    #[clap(
+        long = "env",
+        default_value = ".env",
+		value_hint = ValueHint::FilePath,
+    )]
+    pub env_path: PathBuf,
+}
+
+#[derive(Debug, Parser)]
 #[clap(author, version, about, long_about = None)]
 pub struct Cli {
     #[clap(
         long,
         env = "CPU_THRESHOLD",
+        default_value = "95",
         value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max CPU Usage before warning"
     )]
-    pub cpu_threshold: Option<f32>,
+    pub cpu_threshold: Option<u32>,
     #[clap(
         long,
         env = "RAM_THRESHOLD",
+        default_value = "90",
         value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max RAM Usage before warning"
     )]
-    pub ram_threshold: Option<f32>,
+    pub ram_threshold: Option<u32>,
     #[clap(
         long,
         env = "SWAP_THRESHOLD",
+        default_value = "65",
         value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max Swap Usage before warning"
     )]
-    pub swap_threshold: Option<f32>,
+    pub swap_threshold: Option<u32>,
     #[clap(
         long,
         env = "MEMORY_THRESHOLD",
+        default_value = "75",
 		value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max Memory (RAM & Swap) Usage before warning",
 		conflicts_with_all = ["ram_threshold", "swap_threshold"]
     )]
-    pub memory_threshold: Option<f32>,
+    pub memory_threshold: Option<u32>,
     #[clap(
         long,
         env = "DISK_THRESHOLD",
+        default_value = "85",
         value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max Disk Usage before warning"
     )]
-    pub disk_threshold: Option<f32>,
+    pub disk_threshold: Option<u32>,
     #[clap(
         long,
         env = "AVG_LOAD_THRESHOLD",
+        default_value = "85",
         value_name = "PERCENTAGE",
+		value_parser = clap::value_parser!(u32).range(0..=100),
         help = "Max Average Load before warning"
     )]
-    pub avg_load_threshold: Option<f64>,
+    pub avg_load_threshold: Option<u32>,
     #[clap(
 		short,
 		long = "from",
@@ -75,7 +98,7 @@ pub struct Cli {
     #[clap(
         long = "cooldown",
         env = "MAIL_COOLDOWN",
-        default_value = "5m",
+        default_value = "1h",
 		value_parser = duration_try_from_str,
         help = "Time to wait before sending a mail again"
     )]
@@ -105,11 +128,19 @@ pub struct Cli {
     #[clap(
         long = "last-sent-path",
         env = "LAST_SENT_PATH",
+        default_value = "/tmp/sysmet-notify-last-mail.txt",
         required_unless_present("dry_run"),
 		value_hint = ValueHint::FilePath,
         help = "Timestamp of the last time a mail was sent"
     )]
     pub last_sent_instant: Option<String>,
+    #[clap(
+        long = "env",
+        default_value = ".env",
+		value_hint = ValueHint::FilePath,
+        help = "Path to the optional env file"
+    )]
+    pub env_path: PathBuf,
     #[clap(long = "dry-run", help = "Simulate the run")]
     pub dry_run: bool,
     #[clap(flatten)]
@@ -120,16 +151,6 @@ pub struct Cli {
 fn mailbox_try_from_str(value: &str) -> Result<Mailbox, lettre::address::AddressError> {
     let result = value.parse::<Mailbox>();
     trace!(parsed_mailbox =? result);
-    result
-}
-
-#[tracing::instrument(level = "trace")]
-fn mailboxes_try_from_str(value: &str) -> Result<Vec<Mailbox>, lettre::address::AddressError> {
-    let result = value
-        .split(',')
-        .map(mailbox_try_from_str)
-        .collect::<Result<Vec<Mailbox>, _>>();
-    trace!(parsed_mailboxes =? result);
     result
 }
 
