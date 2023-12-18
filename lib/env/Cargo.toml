@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-dotenvy = "0.15.1"
+dotenvy = "0.15"
 thiserror = "1.0"
 tracing = "0.1"

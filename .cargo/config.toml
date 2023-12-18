@@ -5,35 +5,6 @@ CARGO_WORKSPACE_DIR = { value = "", relative = true }
 xtask = "run --package xtask --"
 migrate = "run --package migration --"
 
-[target.'cfg(all(target_os = "linux", debug_assertions))']
-rustflags = [
-    "-Clinker=clang",
-    "-Clink-arg=-fuse-ld=/usr/local/bin/mold"
-]
-
-[target.'cfg(all(target_os = "linux", not(debug_assertions)))']
-rustflags = [
-    "-Clinker=clang",
-    "-Clink-arg=-fuse-ld=/usr/local/bin/mold",
-    "-Clink-arg=-Wl,--compress-debug-sections=zlib",
-    "-Cforce-frame-pointers=yes",
-    "-Ctarget-feature=+crt-static",
-    "-Clink-self-contained=yes"
-]
-
-# NOTE: you must manually install https://github.com/michaeleisel/zld on mac. you can easily do this with the "brew" package manager:
-# `brew install michaeleisel/zld/zld`
-[target.'cfg(all(target_os = "macos", debug_assertions))']
-rustflags = [
-    "-Clink-arg=-fuse-ld=/usr/local/bin/zld",
-]
-
-[target.'cfg(all(target_os = "macos", not(debug_assertions)))']
-rustflags = [
-    "-C link-arg=-Wl,--compress-debug-sections=zlib",
-    "-C force-frame-pointers=yes"
-]
-
 # From Embark standard lints v5 for Rust 1.55+
 # https://github.com/EmbarkStudios/rust-ecosystem/blob/1cd09c3428cfa3fc1ee1d82bca949fba38c0f4ea/lints.toml
 [target.'cfg(all())']

@@ -36,22 +36,25 @@ pub fn cpu_usage_percent() -> Result<f32> {
         "Sleeping for {CPU_USAGE_INTERVAL}ms waiting to have an interval to calculate CPU usage"
     );
     std::thread::sleep(Duration::from_millis(CPU_USAGE_INTERVAL));
-    let mut result = {
+    let mut raw_result = {
         // NOTE: We clone it so that the initial measurement stay the same
         let mut collector = collector.clone();
         collector.cpu_percent()?
     };
-    while result == 0.0 {
+    while raw_result == 0.0 {
         trace!(
 			"CPU usage is 0% so waiting for {CPU_USAGE_INTERVAL}ms again to have a more accurate result"
 		);
         // NOTE: Needed because CPU usage must be calculated on an interval
         std::thread::sleep(Duration::from_millis(CPU_USAGE_INTERVAL));
-        result = {
+        raw_result = {
             let mut collector = collector.clone();
             collector.cpu_percent()?
         };
     }
+
+    // Source: https://psutil.readthedocs.io/en/latest/#psutil.Process.cpu_percent
+    let result = raw_result / cpu_count() as f32;
     debug!(cpu_usage_percent = result, "Calculated CPU usage");
     Ok(result)
 }

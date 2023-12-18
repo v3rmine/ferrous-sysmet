@@ -2,7 +2,7 @@ use std::process::ExitStatus;
 
 use clap::Parser;
 
-type Result<T> = eyre::Result<T>;
+type Result<T> = color_eyre::Result<T>;
 
 #[derive(clap::Parser)]
 #[clap(author, version, about, long_about = None)]

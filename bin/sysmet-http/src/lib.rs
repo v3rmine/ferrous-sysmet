@@ -3,7 +3,7 @@ use axum::{
     routing::get,
     Router, Server,
 };
-pub use eyre::{Error, Result};
+pub use color_eyre::Result;
 use include_dir::{include_dir, Dir};
 use log::{debug, info, trace, tracing};
 use maud::{html, Markup};

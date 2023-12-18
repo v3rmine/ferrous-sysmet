@@ -3,7 +3,7 @@
 use std::env::set_var;
 
 use clap::{ArgAction, Parser};
-pub(crate) use eyre::Result;
+pub(crate) use color_eyre::Result;
 use metrics::prelude::*;
 
 #[derive(Parser)]

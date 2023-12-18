@@ -9,7 +9,7 @@ use std::{
 };
 
 use clap::Parser;
-pub use eyre::Result;
+pub use color_eyre::Result;
 use lettre::{transport::smtp::authentication::Credentials, SmtpTransport, Transport};
 use log::{debug, error, info, trace};
 use metrics::prelude::*;

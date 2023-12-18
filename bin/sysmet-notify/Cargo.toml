@@ -4,21 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-log = { path = "../../services/log" }
-env = { path = "../../services/env" }
-metrics = { path = "../../services/metrics", features = ["thresholds"] }
+log.workspace = true
+env.workspace = true
+metrics = { workspace = true, features = ["thresholds"] }
 
 # Parsing command line arguments
-clap = { version = "4.0", features = ["derive", "env"] }
-clap-verbosity-flag = "2.0"
+clap.workspace = true
+clap-verbosity-flag.workspace = true
 # Handling errors
-eyre = "0.6"
-color-eyre = "0.6"
+color-eyre.workspace = true
 # Sending mails
-lettre = { version = "0.10", features = ["builder", "smtp-transport", "hostname", "rustls-tls", "tracing"], default-features = false }
+lettre.workspace = true
 # Handling dates
-chrono = { version = "0.4", default-features = false }
+chrono.workspace = true
 # To parse user inputed time
-humantime = "2.1"
+humantime.workspace = true
 # Rounding numbers
+# TODO: Remove or justify why needed
 rust_decimal = "1.26"
